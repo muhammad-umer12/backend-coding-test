@@ -32,6 +32,8 @@ const option={
 const swaggerDocs = swaggerJsDoc(option);
 
 app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(swaggerDocs))
+
+
 module.exports = (db) => {
     
 
@@ -246,7 +248,9 @@ module.exports = (db) => {
  *                     example: 2022-02-26 11:12:58  
  */
     app.get('/rides', (req, res) => {
-        db.all('SELECT * FROM Rides', function (err, rows) {
+        let limit = req.query.limit;
+        let skip = req.query.skip
+        db.all(`SELECT * FROM Rides LIMIT ${limit} offset ${skip}`, function (err, rows) {
             if (err) {
                 return res.send({
                     error_code: 'SERVER_ERROR',
