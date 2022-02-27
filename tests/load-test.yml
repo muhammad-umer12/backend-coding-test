@@ -1,0 +1,30 @@
+
+config:
+  target: "http://localhost:8010"
+  phases:
+    - duration: 30
+      arrivalRate: 100
+ 
+scenarios:
+  - name: "Retrieve rides list"
+    flow:
+      - get:
+          url: "/rides"
+
+  - name: "Post ride detail"
+    flow:
+      - post:
+          url: "/rides"
+          json:
+            start_lat: 33
+            end_lat: 55
+            start_long: 40
+            end_long: 60
+            rider_name: "umer"
+            driver_name: "ali"
+            driver_vehicle: "fvd" 
+
+  - name: "Get ride detail"
+    flow:
+      - post:
+          url: "/rides/:id"
