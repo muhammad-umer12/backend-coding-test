@@ -131,9 +131,9 @@ module.exports =(db) => {
         const startLongitude = Number(req.body.start_long);
         const endLatitude = Number(req.body.end_lat);
         const endLongitude = Number(req.body.end_long);
-        const riderName = req.body.rider_name;
-        const driverName = req.body.driver_name;
-        const driverVehicle = req.body.driver_vehicle;
+        const riderName =await filter( req.body.rider_name);
+        const driverName = await filter( req.body.driver_name);
+        const driverVehicle =await filter( req.body.driver_vehicle);
 
         if (startLatitude < -90 || startLatitude > 90 || startLongitude < -180 || startLongitude > 180) {
             return res.send({
@@ -170,7 +170,7 @@ module.exports =(db) => {
             });
         }
 
-        var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, req.body.rider_name, req.body.driver_name, req.body.driver_vehicle];
+        var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, riderName, driverName, driverVehicle];
         
       //   await db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values)
       try{
@@ -243,8 +243,8 @@ module.exports =(db) => {
  *                     example: 2022-02-26 11:12:58  
  */
     app.get('/rides',async (req, res) => {
-        let limit = req.query.limit;
-        let skip = req.query.skip
+        let limit =await filter( req.query.limit);
+        let skip =await filter( req.query.skip)
         try{
             const rows = await db_all(`SELECT * FROM Rides LIMIT ${limit} offset ${skip}`,db,res);
             console.log(rows)
@@ -318,8 +318,8 @@ module.exports =(db) => {
  */
     app.get('/rides/:id',async (req, res) => {
        try{
-
-        const rows = await db_all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`,db,res)
+        let params  = await filter(req.params.id);
+        const rows = await db_all(`SELECT * FROM Rides WHERE rideID='${params}'`,db,res)
         res.send(rows)
 
        } 
@@ -375,4 +375,9 @@ async function db_run(query,values,db,res){
            return this;
          });
     });
+}
+
+async function filter(string)
+{
+    return string.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
 }
