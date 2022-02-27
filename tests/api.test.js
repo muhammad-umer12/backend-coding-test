@@ -29,4 +29,53 @@ describe('API tests', () => {
                 .expect(200, done);
         });
     });
+
+    describe('GET /rides', () => {
+    
+        it('should return json list of rides', (done) => {
+            const res = request(app)
+            .get('/rides')
+            .set('Accept', 'application/json')
+            .expect('Content-Type', /json/)
+            .expect(200, done);  
+                       
+        });
+    });
 });
+
+describe('GET /rides/:id', () => {
+    
+    it('should return json object of rides', (done) => {
+        const res = request(app)
+        .get('/rides/:id')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200, done);  
+                   
+    });
+});
+
+describe('POST /rides', function() {
+    it('should return json of rides', function(done) {
+      request(app)
+        .post('/rides')
+        .send(
+            {
+                "start_lat":33,
+                "start_long":33,
+                "end_lat":55,
+                "end_long":44,
+                "rider_name":"umer",
+                "driver_name":"ali",
+                "driver_vehicle":"toyota"
+            }
+        )
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function(err, res) {
+          if (err) return done(err);
+          return done();
+        });
+    });
+  });

@@ -378,6 +378,9 @@ async function db_run(query,values,db,res){
 }
 
 async function filter(string)
-{
+{   if(string==undefined)
+    {
+        string=''
+    }
     return string.replace(/[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
 }

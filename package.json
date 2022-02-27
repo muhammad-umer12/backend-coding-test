@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha tests",
+    "test": "mocha tests --timeout 10000",
     "start": "node index.js",
     "test:load": "artillery run tests/load-test.yml"
   },
