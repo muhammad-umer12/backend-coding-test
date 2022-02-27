@@ -34,7 +34,7 @@ const swaggerDocs = swaggerJsDoc(option);
 app.use("/api-docs",swaggerUi.serve,swaggerUi.setup(swaggerDocs))
 
 
-module.exports = (db) => {
+module.exports =(db) => {
     
 
     app.get('/health', (req, res) => res.send('Healthy'));
@@ -126,7 +126,7 @@ module.exports = (db) => {
 */
 
 
-    app.post('/rides', jsonParser, (req, res) => {
+    app.post('/rides', jsonParser, async (req, res) => {
         const startLatitude = Number(req.body.start_lat);
         const startLongitude = Number(req.body.start_long);
         const endLatitude = Number(req.body.end_lat);
@@ -172,26 +172,21 @@ module.exports = (db) => {
 
         var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, req.body.rider_name, req.body.driver_name, req.body.driver_vehicle];
         
-        const result = db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values, function (err) {
-            if (err) {
-
-                return res.send({
-                    error_code: 'SERVER_ERROR',
-                    message: 'Unknown error'
-                });
-            }
-
-            db.all('SELECT * FROM Rides WHERE rideID = ?', this.lastID, function (err, rows) {
-                if (err) {
-                    return res.send({
-                        error_code: 'SERVER_ERROR',
-                        message: 'Unknown error'
-                    });
-                }
-
-                res.send(rows);
-            });
+      //   await db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values)
+      try{
+        const result = await db_run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values,db,res)
+     
+        const rows = await db_all(`SELECT * FROM Rides WHERE rideID = ${result.lastID}`,db,res)
+        res.send(rows)
+    
+      }
+      catch(e){{
+        return res.send({
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error'
         });
+      }}
+  
     });
 
     /**
@@ -247,26 +242,24 @@ module.exports = (db) => {
  *                     description: date of a ride
  *                     example: 2022-02-26 11:12:58  
  */
-    app.get('/rides', (req, res) => {
+    app.get('/rides',async (req, res) => {
         let limit = req.query.limit;
         let skip = req.query.skip
-        db.all(`SELECT * FROM Rides LIMIT ${limit} offset ${skip}`, function (err, rows) {
-            if (err) {
-                return res.send({
-                    error_code: 'SERVER_ERROR',
-                    message: 'Unknown error'
-                });
-            }
-
-            if (rows.length === 0) {
-                return res.send({
-                    error_code: 'RIDES_NOT_FOUND_ERROR',
-                    message: 'Could not find any rides'
-                });
-            }
-
+        try{
+            const rows = await db_all(`SELECT * FROM Rides LIMIT ${limit} offset ${skip}`,db,res);
+            console.log(rows)
+       
             res.send(rows);
-        });
+
+        }
+        catch(e)
+        {
+            return res.send({
+                error_code: 'SERVER_ERROR',
+                message: 'Unknown error'
+            });
+        }
+    
     });
 
 
@@ -323,8 +316,30 @@ module.exports = (db) => {
  *                     description: date of a ride
  *                     example: 2022-02-26 11:12:58  
  */
-    app.get('/rides/:id', (req, res) => {
-        db.all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`, function (err, rows) {
+    app.get('/rides/:id',async (req, res) => {
+       try{
+
+        const rows = await db_all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`,db,res)
+        res.send(rows)
+
+       } 
+       catch(e){
+        return res.send({
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error'
+        });
+       }
+ 
+
+    });
+
+    return app;
+};
+
+
+async function db_all(query,db,res){
+    return new Promise(function(resolve,reject){
+        db.all(query, function(err,rows){
             if (err) {
                 return res.send({
                     error_code: 'SERVER_ERROR',
@@ -339,9 +354,25 @@ module.exports = (db) => {
                 });
             }
 
-            res.send(rows);
-        });
+           resolve(rows);
+           return rows
+         });
     });
+}
 
-    return app;
-};
+async function db_run(query,values,db,res){
+    return new Promise(function(resolve,reject){
+        db.run(query,values, function(err,rows){
+            if (err) {
+                return res.send({
+                    error_code: 'SERVER_ERROR',
+                    message: 'Unknown error'
+                });
+            }
+
+      
+           resolve(this);
+           return this;
+         });
+    });
+}
